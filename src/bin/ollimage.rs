@@ -1,11 +1,9 @@
 use anyhow::anyhow;
+use cubetools::rendering::{big_square_size, render_big_square, render_square};
+use cubetools::svg::{Path, Tag};
+use cubetools::Specs;
 use once_cell::sync::Lazy;
-use path::Path;
 use std::str::FromStr;
-use tags::Tag;
-
-mod path;
-mod tags;
 
 #[derive(argh::FromArgs)]
 /// Generate a little cubie diagram
@@ -13,27 +11,9 @@ struct Args {
     #[argh(positional)]
     input: String,
 
-    #[argh(option, default = "50", short = 'w')]
+    #[argh(option, default = "25", short = 'w')]
     /// width of each cubie
     cubie_size: u32,
-}
-
-struct Specs {
-    cubie_size: u32,
-    border_width: u32,
-    gutter_size: u32,
-    sticker_width: u32,
-}
-
-impl Specs {
-    fn with_cubie_size(cubie_size: u32) -> Self {
-        Self {
-            cubie_size,
-            border_width: 2,
-            gutter_size: cubie_size / 10,
-            sticker_width: cubie_size / 5,
-        }
-    }
 }
 
 /// For each of the nine positions on a cube face, list the legal positions for the sticker.
@@ -121,25 +101,6 @@ fn parse_desc(input: &str) -> Vec<Direction> {
     dirs
 }
 
-fn render_square(x: u32, y: u32, width: u32, fill: &str) -> String {
-    let path = Path::new()
-        .M(x as i32, y as i32)
-        .h(width as i32)
-        .v(width as i32)
-        .h(-(width as i32))
-        .v(-(width as i32));
-
-    let tag = Tag::new("path")
-        .attr("fill", fill)
-        .attr("border-width", "0")
-        .attr("d", path.output());
-
-    let mut str = tag.open();
-    str.push_str(&tag.close());
-
-    str
-}
-
 fn render_rect(x: u32, y: u32, width: u32, height: u32, fill: &str) -> String {
     let path = Path::new()
         .M(x as i32, y as i32)
@@ -158,23 +119,6 @@ fn render_rect(x: u32, y: u32, width: u32, height: u32, fill: &str) -> String {
     str.push_str(&tag.close());
 
     str
-}
-
-fn big_square_size(specs: &Specs) -> u32 {
-    specs.border_width * 2 + specs.gutter_size * 4 + specs.cubie_size * 3
-}
-
-fn render_big_square(specs: &Specs) -> String {
-    /*
-      border * 2 + gutter * 4 + cell * 3
-    */
-    let big_square_size = big_square_size(specs);
-    render_square(
-        specs.sticker_width + specs.gutter_size,
-        specs.sticker_width + specs.gutter_size,
-        big_square_size,
-        "black",
-    )
 }
 
 fn color_for_direction(dir: Direction) -> &'static str {
@@ -289,8 +233,10 @@ fn specs_from_args(args: &Args) -> Specs {
 
 fn main() {
     let args: Args = argh::from_env();
+
     let specs = specs_from_args(&args);
     let desc = parse_desc(&args.input);
     let svg = render(&desc, &specs);
+
     println!("{}", svg);
 }

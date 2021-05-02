@@ -14,6 +14,12 @@ impl Path {
     }
 
     #[allow(non_snake_case)]
+    pub fn L(mut self, x: i32, y: i32) -> Self {
+        self.add(&format!("L {} {}", x, y));
+        self
+    }
+
+    #[allow(non_snake_case)]
     pub fn M(mut self, x: i32, y: i32) -> Self {
         self.add(&format!("M {} {} ", x, y));
         self
@@ -26,6 +32,11 @@ impl Path {
 
     pub fn v(mut self, y: i32) -> Self {
         self.add(&format!("v {} ", y));
+        self
+    }
+
+    pub fn z(mut self) -> Self {
+        self.add("z");
         self
     }
 
