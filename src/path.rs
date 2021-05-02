@@ -13,6 +13,7 @@ impl Path {
         &self.path_string.trim()
     }
 
+    #[allow(non_snake_case)]
     pub fn M(mut self, x: i32, y: i32) -> Self {
         self.add(&format!("M {} {} ", x, y));
         self

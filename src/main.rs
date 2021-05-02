@@ -36,6 +36,15 @@ impl Specs {
     }
 }
 
+/// For each of the nine positions on a cube face, list the legal positions for the sticker.
+/// (Face and Empty are always valid.)
+///
+/// The cube face is numbered like this:
+///
+///    0 1 2
+///    3 4 5
+///    6 7 8
+///
 static CUBE: Lazy<Vec<Cubie>> = Lazy::new(|| {
     use Direction::*;
     vec![
