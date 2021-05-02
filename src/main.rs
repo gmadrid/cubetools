@@ -1,12 +1,9 @@
-/*
-    Input a string like: U U R L F F D D F
-
-    And get a diagram.
-*/
-
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
 use std::str::FromStr;
+use tags::Tag;
+
+mod tags;
 
 #[derive(argh::FromArgs)]
 /// Generate a little cubie diagram
@@ -114,22 +111,44 @@ fn parse_desc(input: &str) -> Vec<Direction> {
 }
 
 fn render_square(x: u32, y: u32, width: u32, fill: &str) -> String {
-    format!(
-        "<path fill=\"{}\" border-width=\"0\" d=\"M {},{} h {} v {} h -{} v -{}\" />\n",
-        fill, x, y, width, width, width, width
-    )
+    let tag = Tag::new("path")
+        .attr("fill", fill)
+        .attr("border-width", "0")
+        .attr(
+            "d",
+            &format!(
+                "M {},{} h {} v {} h -{} v -{}",
+                x, y, width, width, width, width
+            ),
+        );
+
+    let mut str = tag.open();
+    str.push_str(&tag.close());
+
+    str
 }
 
 fn render_rect(x: u32, y: u32, width: u32, height: u32, fill: &str) -> String {
-    format!(
-        "<path fill=\"{}\" stroke=\"black\" stroke-width=\"2\" d=\"M {},{} h {} v {} h -{} v -{}\" />\n",
-        fill, x, y, width, height, width, height
-    )
+    let tag = Tag::new("path")
+        .attr("fill", fill)
+        .attr("stroke", "black")
+        .attr("stroke-width", &2.to_string())
+        .attr(
+            "d",
+            &format!(
+                "M {},{} h {} v {} h -{} v -{}",
+                x, y, width, height, width, height
+            ),
+        );
+
+    let mut str = tag.open();
+    str.push_str(&tag.close());
+
+    str
 }
 
 fn big_square_size(specs: &Specs) -> u32 {
     specs.border_width * 2 + specs.gutter_size * 4 + specs.cubie_size * 3
-    //BORDER_WIDTH * 2 + GUTTER_SIZE * 4 + CELL_SIZE * 3
 }
 
 fn render_big_square(specs: &Specs) -> String {
@@ -157,7 +176,6 @@ fn color_for_direction(dir: Direction) -> &'static str {
 }
 
 fn row_or_col_start(idx: u32, specs: &Specs) -> u32 {
-    //    STICKER_WIDTH + GUTTER_SIZE * (2 + idx) + BORDER_WIDTH + CELL_SIZE * idx
     specs.sticker_width
         + specs.gutter_size * (2 + idx)
         + specs.border_width
@@ -216,7 +234,7 @@ fn render_stickers(desc: &[Direction], specs: &Specs) -> String {
                 ));
             }
             Direction::Down => {
-                let x = row_or_col_start(idx as u32 / 3, specs);
+                let x = row_or_col_start(idx as u32 % 3, specs);
                 let y = big_square_size(specs) + specs.sticker_width + specs.gutter_size * 2;
                 result.push_str(&render_rect(
                     x,
@@ -236,13 +254,21 @@ fn render_stickers(desc: &[Direction], specs: &Specs) -> String {
 fn render(desc: &[Direction], specs: &Specs) -> String {
     let mut svg = String::new();
 
-    svg.push_str("<svg xmlns=\"http://www.w3.org/2000/svg\">");
+    let size = big_square_size(specs) + specs.gutter_size * 2 + specs.sticker_width * 2;
+
+    let tag = Tag::new("svg")
+        .attr("xmlns", "http://www.w3.org/2000/svg")
+        .attr("height", &size.to_string())
+        .attr("width", &size.to_string());
+
+    svg.push_str(&tag.open());
 
     svg.push_str(&render_big_square(&specs));
     svg.push_str(&render_small_squares(desc, &specs));
     svg.push_str(&render_stickers(desc, &specs));
 
-    svg.push_str("</svg>");
+    svg.push_str(&tag.close());
+
     svg
 }
 
