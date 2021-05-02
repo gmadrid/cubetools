@@ -1,8 +1,10 @@
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
+use path::Path;
 use std::str::FromStr;
 use tags::Tag;
 
+mod path;
 mod tags;
 
 #[derive(argh::FromArgs)]
@@ -111,16 +113,17 @@ fn parse_desc(input: &str) -> Vec<Direction> {
 }
 
 fn render_square(x: u32, y: u32, width: u32, fill: &str) -> String {
+    let path = Path::new()
+        .M(x as i32, y as i32)
+        .h(width as i32)
+        .v(width as i32)
+        .h(-(width as i32))
+        .v(-(width as i32));
+
     let tag = Tag::new("path")
         .attr("fill", fill)
         .attr("border-width", "0")
-        .attr(
-            "d",
-            &format!(
-                "M {},{} h {} v {} h -{} v -{}",
-                x, y, width, width, width, width
-            ),
-        );
+        .attr("d", path.output());
 
     let mut str = tag.open();
     str.push_str(&tag.close());
@@ -129,17 +132,18 @@ fn render_square(x: u32, y: u32, width: u32, fill: &str) -> String {
 }
 
 fn render_rect(x: u32, y: u32, width: u32, height: u32, fill: &str) -> String {
+    let path = Path::new()
+        .M(x as i32, y as i32)
+        .h(width as i32)
+        .v(height as i32)
+        .h(-(width as i32))
+        .v(-(height as i32));
+
     let tag = Tag::new("path")
         .attr("fill", fill)
         .attr("stroke", "black")
         .attr("stroke-width", &2.to_string())
-        .attr(
-            "d",
-            &format!(
-                "M {},{} h {} v {} h -{} v -{}",
-                x, y, width, height, width, height
-            ),
-        );
+        .attr("d", path.output());
 
     let mut str = tag.open();
     str.push_str(&tag.close());
@@ -159,8 +163,6 @@ fn render_big_square(specs: &Specs) -> String {
     render_square(
         specs.sticker_width + specs.gutter_size,
         specs.sticker_width + specs.gutter_size,
-        // STICKER_WIDTH + GUTTER_SIZE,
-        // STICKER_WIDTH + GUTTER_SIZE,
         big_square_size,
         "black",
     )
