@@ -11,7 +11,7 @@ struct Args {
     #[argh(positional)]
     input: String,
 
-    #[argh(option, default = "50", short = 'w')]
+    #[argh(option, default = "25", short = 'w')]
     /// width of each cubie
     cubie_size: u32,
 }
@@ -220,8 +220,8 @@ fn render_defs() -> String {
         .attr("viewBox", "0 0 10 10")
         .attr("refX", "5")
         .attr("refY", "5")
-        .attr("markerWidth", "4")
-        .attr("markerHeight", "4")
+        .attr("markerWidth", "3")
+        .attr("markerHeight", "3")
         .attr("orient", "auto-start-reverse");
 
     let path = Path::new().M(0, 0).L(10, 5).L(0, 10).z();
