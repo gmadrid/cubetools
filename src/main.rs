@@ -8,11 +8,6 @@ use anyhow::anyhow;
 use once_cell::sync::Lazy;
 use std::str::FromStr;
 
-const BORDER_WIDTH: u32 = 2;
-const CELL_SIZE: u32 = 50;
-const GUTTER_SIZE: u32 = 5;
-const STICKER_WIDTH: u32 = 10;
-
 #[derive(argh::FromArgs)]
 /// Generate a little cubie diagram
 struct Args {
@@ -29,6 +24,17 @@ struct Specs {
     border_width: u32,
     gutter_size: u32,
     sticker_width: u32,
+}
+
+impl Specs {
+    fn with_cubie_size(cubie_size: u32) -> Self {
+        Self {
+            cubie_size,
+            border_width: 2,
+            gutter_size: cubie_size / 10,
+            sticker_width: cubie_size / 5,
+        }
+    }
 }
 
 static CUBE: Lazy<Vec<Cubie>> = Lazy::new(|| {
@@ -121,18 +127,21 @@ fn render_rect(x: u32, y: u32, width: u32, height: u32, fill: &str) -> String {
     )
 }
 
-fn big_square_size() -> u32 {
-    BORDER_WIDTH * 2 + GUTTER_SIZE * 4 + CELL_SIZE * 3
+fn big_square_size(specs: &Specs) -> u32 {
+    specs.border_width * 2 + specs.gutter_size * 4 + specs.cubie_size * 3
+    //BORDER_WIDTH * 2 + GUTTER_SIZE * 4 + CELL_SIZE * 3
 }
 
-fn render_big_square() -> String {
+fn render_big_square(specs: &Specs) -> String {
     /*
       border * 2 + gutter * 4 + cell * 3
     */
-    let big_square_size = big_square_size();
+    let big_square_size = big_square_size(specs);
     render_square(
-        STICKER_WIDTH + GUTTER_SIZE,
-        STICKER_WIDTH + GUTTER_SIZE,
+        specs.sticker_width + specs.gutter_size,
+        specs.sticker_width + specs.gutter_size,
+        // STICKER_WIDTH + GUTTER_SIZE,
+        // STICKER_WIDTH + GUTTER_SIZE,
         big_square_size,
         "black",
     )
@@ -147,47 +156,75 @@ fn color_for_direction(dir: Direction) -> &'static str {
     }
 }
 
-fn row_or_col_start(idx: u32) -> u32 {
-    STICKER_WIDTH + GUTTER_SIZE * (2 + idx) + BORDER_WIDTH + CELL_SIZE * idx
+fn row_or_col_start(idx: u32, specs: &Specs) -> u32 {
+    //    STICKER_WIDTH + GUTTER_SIZE * (2 + idx) + BORDER_WIDTH + CELL_SIZE * idx
+    specs.sticker_width
+        + specs.gutter_size * (2 + idx)
+        + specs.border_width
+        + specs.cubie_size * idx
 }
 
-fn render_small_squares(desc: &[Direction]) -> String {
+fn render_small_squares(desc: &[Direction], specs: &Specs) -> String {
     let mut result = String::default();
     for idx in 0..9 {
         let row = idx / 3;
         let col = idx % 3;
 
-        let x = row_or_col_start(col);
-        let y = row_or_col_start(row);
+        let x = row_or_col_start(col, specs);
+        let y = row_or_col_start(row, specs);
 
         let color = color_for_direction(desc[idx as usize]);
-        result.push_str(&render_square(x, y, CELL_SIZE, color))
+        result.push_str(&render_square(x, y, specs.cubie_size, color))
     }
     result
 }
 
-fn render_stickers(desc: &[Direction]) -> String {
+fn render_stickers(desc: &[Direction], specs: &Specs) -> String {
     let mut result = String::default();
 
     for (idx, dir) in desc.iter().enumerate() {
         match *dir {
             Direction::Up => {
-                let x = row_or_col_start(idx as u32 % 3);
-                result.push_str(&render_rect(x, 0, CELL_SIZE, STICKER_WIDTH, "yellow"));
+                let x = row_or_col_start(idx as u32 % 3, specs);
+                result.push_str(&render_rect(
+                    x,
+                    0,
+                    specs.cubie_size,
+                    specs.sticker_width,
+                    "yellow",
+                ));
             }
             Direction::Left => {
-                let y = row_or_col_start(idx as u32 / 3);
-                result.push_str(&render_rect(0, y, STICKER_WIDTH, CELL_SIZE, "yellow"));
+                let y = row_or_col_start(idx as u32 / 3, specs);
+                result.push_str(&render_rect(
+                    0,
+                    y,
+                    specs.sticker_width,
+                    specs.cubie_size,
+                    "yellow",
+                ));
             }
             Direction::Right => {
-                let x = big_square_size() + STICKER_WIDTH + GUTTER_SIZE * 2;
-                let y = row_or_col_start(idx as u32 / 3);
-                result.push_str(&render_rect(x, y, STICKER_WIDTH, CELL_SIZE, "yellow"));
+                let x = big_square_size(specs) + specs.sticker_width + specs.gutter_size * 2;
+                let y = row_or_col_start(idx as u32 / 3, specs);
+                result.push_str(&render_rect(
+                    x,
+                    y,
+                    specs.sticker_width,
+                    specs.cubie_size,
+                    "yellow",
+                ));
             }
             Direction::Down => {
-                let x = row_or_col_start(idx as u32 / 3);
-                let y = big_square_size() + STICKER_WIDTH + GUTTER_SIZE * 2;
-                result.push_str(&render_rect(x, y, CELL_SIZE, STICKER_WIDTH, "yellow"));
+                let x = row_or_col_start(idx as u32 / 3, specs);
+                let y = big_square_size(specs) + specs.sticker_width + specs.gutter_size * 2;
+                result.push_str(&render_rect(
+                    x,
+                    y,
+                    specs.cubie_size,
+                    specs.sticker_width,
+                    "yellow",
+                ));
             }
             _ => {}
         }
@@ -196,22 +233,27 @@ fn render_stickers(desc: &[Direction]) -> String {
     result
 }
 
-fn render(desc: &[Direction]) -> String {
+fn render(desc: &[Direction], specs: &Specs) -> String {
     let mut svg = String::new();
-    //    svg.push_str("<?xml version=\"1.0\"?>");
+
     svg.push_str("<svg xmlns=\"http://www.w3.org/2000/svg\">");
 
-    svg.push_str(&render_big_square());
-    svg.push_str(&render_small_squares(desc));
-    svg.push_str(&render_stickers(desc));
+    svg.push_str(&render_big_square(&specs));
+    svg.push_str(&render_small_squares(desc, &specs));
+    svg.push_str(&render_stickers(desc, &specs));
 
     svg.push_str("</svg>");
     svg
 }
 
+fn specs_from_args(args: &Args) -> Specs {
+    Specs::with_cubie_size(args.cubie_size)
+}
+
 fn main() {
     let args: Args = argh::from_env();
+    let specs = specs_from_args(&args);
     let desc = parse_desc(&args.input);
-    let svg = render(&desc);
+    let svg = render(&desc, &specs);
     println!("{}", svg);
 }
