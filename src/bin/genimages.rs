@@ -107,6 +107,7 @@ fn render_descs(descs: &[ImageDesc], dest_path: &Path) -> Result<()> {
         let mut output =
             File::create(&full_path).context(format!("Cannot create '{:?}'", &full_path))?;
         output.write_all(svg.as_bytes())?;
+        output.write_all("\n".as_bytes())?;
     }
 
     Ok(())
