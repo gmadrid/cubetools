@@ -70,7 +70,6 @@ fn prettify_table(
             copy_maxes(&maxes, this_list)
         });
 
-    //dbg!(max_segment_lengths);
     for segment_list in segment_lists {
         let s = segment_list
             .iter()
@@ -92,7 +91,6 @@ fn prettify_table(
             .collect::<Vec<_>>()
             .join("|");
         println!("{}", s);
-        //        dbg!(segment_list);
     }
 
     Ok(())
@@ -112,15 +110,4 @@ fn main() -> Result<()> {
     prettify(&args.input_file)?;
 
     Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    #[test]
-    fn tes_fo() {
-        let s = "| --- | --- | --- |";
-        let ss = s.split("|").collect::<Vec<_>>();
-
-        assert!(dbg!(ss).is_empty());
-    }
 }

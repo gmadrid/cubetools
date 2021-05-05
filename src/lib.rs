@@ -1,19 +1,25 @@
+pub mod ollrender;
+pub mod ollspec;
 mod path;
+pub mod pllrender;
+pub mod pllspec;
 mod tags;
+
+pub type Result<T> = std::result::Result<T, anyhow::Error>;
 
 pub mod svg {
     pub use crate::path::Path;
     pub use crate::tags::Tag;
 }
 
-pub struct Specs {
+pub struct RenderOpts {
     pub cubie_size: u32,
     pub border_width: u32,
     pub gutter_size: u32,
     pub sticker_width: u32,
 }
 
-impl Specs {
+impl RenderOpts {
     pub fn with_cubie_size(cubie_size: u32) -> Self {
         Self {
             cubie_size,
@@ -28,7 +34,7 @@ pub mod rendering {
     use super::*;
     use svg::{Path, Tag};
 
-    pub fn render_big_square(specs: &Specs) -> String {
+    pub fn render_big_square(specs: &RenderOpts) -> String {
         /*
           border * 2 + gutter * 4 + cell * 3
         */
@@ -60,7 +66,14 @@ pub mod rendering {
         str
     }
 
-    pub fn big_square_size(specs: &Specs) -> u32 {
+    pub fn big_square_size(specs: &RenderOpts) -> u32 {
         specs.border_width * 2 + specs.gutter_size * 4 + specs.cubie_size * 3
+    }
+
+    pub fn row_or_col_start(idx: u32, specs: &RenderOpts) -> u32 {
+        specs.sticker_width
+            + specs.gutter_size * (2 + idx)
+            + specs.border_width
+            + specs.cubie_size * idx
     }
 }
