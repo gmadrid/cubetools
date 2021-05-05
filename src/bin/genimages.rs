@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Context, Error};
 use argh::FromArgs;
 use cubetools::ollrender::render as oll_render;
 use cubetools::ollspec::{parse_desc, Direction};
@@ -67,7 +67,7 @@ impl CubeSpec {
     }
 
     fn render(&self) -> Result<String> {
-        let specs = RenderOpts::with_cubie_size(100);
+        let specs = RenderOpts::with_cubie_size(25);
         let svg = match self {
             CubeSpec::OLL(oll_spec) => oll_render(oll_spec, &specs),
             CubeSpec::PLL(pll_spec) => pll_render(pll_spec, &specs),
@@ -104,7 +104,8 @@ fn render_descs(descs: &[ImageDesc], dest_path: &Path) -> Result<()> {
         let full_path = dest_path.join(&desc.file_stem).with_extension("svg");
         let svg = desc.render()?;
 
-        let mut output = File::create(full_path)?;
+        let mut output =
+            File::create(&full_path).context(format!("Cannot create '{:?}'", &full_path))?;
         output.write_all(svg.as_bytes())?;
     }
 
